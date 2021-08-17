@@ -11,12 +11,14 @@ on:
     paths:
       - "src/*"
       - "test_local.py"
+  # Allows workflow to be manually triggered
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container: 
-        image: cmelab/planckton_cpu:v0.4.0
+        image: cmelab/planckton_cpu:latest
 
     steps:
     - uses: actions/checkout@v2

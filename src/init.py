@@ -3,7 +3,6 @@
 
 Iterates over all defined state points and initializes
 the associated job workspace directories."""
-from collections import OrderedDict
 from itertools import product
 
 import signac
@@ -12,7 +11,7 @@ import signac
 project_name = "my_project"
 
 # Parameters used for generating the morphology
-parameters = OrderedDict({
+parameters = {
     # input can be the path to a molecule file or a SMILES string
     # or a key to the COMPOUND dictionary in PlanckTon (shown below)
     # The compounds ending with "-gaff" are designed to be used with the
@@ -36,8 +35,10 @@ parameters = OrderedDict({
 
     # If a mixture is used, the number of each compound in the mixture
     # needs to be specified:
-    # "n_compounds" = [(100,100), (1000,500)]
+    # "n_compounds" = [[100,100], [1000,500]]
+    # Even if not doing a mixture, enter n_compounds as a list or tuple (Example: [[100]]
     # Value for n_compounds must be an integer, not a float. (Example: Use 2 instead of 2.0)
+
     "n_compounds": [100, 200],
 
     # Density must be specified as a pair containing (value, unit)
@@ -67,7 +68,7 @@ parameters = OrderedDict({
     # Whether to remove hydrogen atoms
     "remove_hydrogens": [False],  # True or False
     "mode": ["gpu"]  # "cpu" or "gpu"
-})
+}
 
 
 def get_parameters(parameters):
