@@ -27,10 +27,13 @@ parameters = {
         #["ITIC-gaff"],
         #["ITIC-Th-gaff"],
         #["IEICO-gaff"],
-        ["IDT-2BR-gaff"],
+        #["IDT-2BR-gaff"],
         #["EH-IDTBR-gaff"],
         #["TruxTP6FITIC-gaff"],
         #["TruxTPITIC-gaff"],
+    	#["IOIC5.mol2"],
+    	#["y6.mol2"],
+    	["IOIC5.mol2","y6.mol2"]
         ],
 
     # If a mixture is used, the number of each compound in the mixture
@@ -38,23 +41,23 @@ parameters = {
     # "n_compounds" = [[100,100], [1000,500]]
     # Even if not doing a mixture, enter n_compounds as a list or tuple (Example: [[100]]
     # Value for n_compounds must be an integer, not a float. (Example: Use 2 instead of 2.0)
+    "n_compounds": [[50,50]],
 
-    "n_compounds": [100, 200],
-
-    # Density must be specified as a pair containing (value, unit)
-    "density": [(2.5, "g/cm**3")],
+    # Density specified as a string, like "value_unit" replacing "/" with "-"
+    "density": ["0.75_g-cm**3"],
     # Energy scaling "solvent" parameter
     "e_factor": [1.0],
 
     # Force fields are specified as keys to the FORCEFIELD dictionary in
     # planckton/forcefields/__init__.py
     "forcefield": [
-        "gaff-custom",
+        #"gaff-custom",
         #"gaff",
+    	"gaff.xml",
         ],
 
     # Reduced temperatures specified in simulation units
-    "kT_reduced": [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5],
+    "kT_reduced": [1.0],
 
     # Simulation parameters
     # Thermostat coupling
@@ -62,7 +65,7 @@ parameters = {
     # Number of steps to shrink the box
     "shrink_steps": [1e3],
     # Number of steps to run final simulation
-    "n_steps": [2e8],
+    "n_steps": [1e7],
     # Timestep size
     "dt": [0.0001],
     # Whether to remove hydrogen atoms
