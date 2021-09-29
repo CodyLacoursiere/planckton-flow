@@ -8,8 +8,9 @@ status, execute operations and submit them to a cluster. See also:
 import flow
 from flow import FlowProject, directives
 from flow.environment import DefaultSlurmEnvironment
-from flow.environments.xsede import Bridges2Environment, CometEnvironment
+from flow.environments.xsede import Bridges2Environment
 from os import path
+
 
 class MyProject(FlowProject):
     pass
@@ -28,14 +29,29 @@ class Bridges2Custom(Bridges2Environment):
         )
 
 
-class CometCustom(CometEnvironment):
+class Borah(DefaultSlurmEnvironment):
+    hostname_pattern = "borah"
+    template = "borah.sh"
+
     @classmethod
     def add_args(cls, parser):
-        super(CometEnvironment, cls).add_args(parser)
         parser.add_argument(
             "--partition",
-            default="gpu-shared",
-            help="Specify the partition to submit to.",
+            default="gpu",
+            help="Specify the partition to submit to."
+        )
+
+
+class R2(DefaultSlurmEnvironment):
+    hostname_pattern = "r2"
+    template = "r2.sh"
+
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument(
+            "--partition",
+            default="gpuq",
+            help="Specify the partition to submit to."
         )
 
 
@@ -70,18 +86,9 @@ class Kestrel(DefaultSlurmEnvironment):
 
 
 # Definition of project-related labels (classification)
-def current_step(job):
-    import gsd.hoomd
-
-    if job.isfile("trajectory.gsd"):
-        with gsd.hoomd.open(job.fn("trajectory.gsd")) as traj:
-            return traj[-1].configuration.step
-    return -1
-
-
 @MyProject.label
 def sampled(job):
-    return current_step(job) >= job.doc.steps
+    return job.doc.get("done")
 
 
 def get_paths(key, job):
@@ -160,31 +167,37 @@ def sample(job):
             restart = None
             target_length = packer.L
 
+        total_steps = sum(job.sp.n_steps,job.sp.shrink_steps)
+
         my_sim = Simulation(
             system,
-            kT=job.sp.kT_reduced,
-            gsd_write=max([int(job.sp.n_steps / 100), 1]),
-            log_write=max([int(job.sp.n_steps / 10000), 1]),
-            e_factor=job.sp.e_factor,
-            n_steps=job.sp.n_steps,
-            shrink_steps=job.sp.shrink_steps,
+            kT=job.sp.kT,
             tau=job.sp.tau,
+            n_steps=job.sp.n_steps,
             dt=job.sp.dt,
+            e_factor=job.sp.e_factor,
+            r_cut=job.sp.r_cut,
+            gsd_write=max([int(total_steps / 100), 1]),
+            log_write=max([int(total_steps / 10000), 1]),
+            shrink_steps=job.sp.shrink_steps,
+            shrink_kT=job.sp.shrink_kT,
+            shrink_tau=job.sp.shrink_tau,
             mode=job.sp.mode,
             target_length=target_length,
             restart=restart
         )
 
 
-        my_sim.run()
+        job.doc["done"] = my_sim.run()
 
         ref_distance = my_sim.ref_values.distance * u.Angstrom
         ref_energy = my_sim.ref_values.energy * u.kcal / u.mol
-        ref_mass = my_sim.ref_values.mass * u.amu
+        ref_mass = my_sim.ref_values.mass *	0.9999938574 * u.amu
 
-        job.doc["T_SI"] = units.quantity_to_string(
-            units.kelvin_from_reduced(job.sp.kT_reduced, ref_energy)
-            )
+        job.doc["T_SI"] = [
+            units.quantity_to_string(units.kelvin_from_reduced(kT, ref_energy))
+            for kT in job.sp.kT
+        ]
         job.doc["real_timestep"] = units.quantity_to_string(
             units.convert_to_real_time(
                 job.sp.dt, ref_mass, ref_distance, ref_energy
